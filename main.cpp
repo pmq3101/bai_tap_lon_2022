@@ -5,20 +5,19 @@
 #include <SDL.h>
 #include <SDL_image.h>
 
+#define compareBoxes(box1, box2, box3) ((board[box1] == board[box2]) && (board[box2] == board[box3]) && (board[box1] != 0)) //Checkes if three items are the same, and makes sure they're not 0's.
+#define numberToLetter(x) ((x > 0) ? (x == 1) ? 'X' : 'O' : ' ') //Takes the number and turns it into the letter or space.
+
 using namespace std;
 
 // game funtions
 
-int grid[9];
+int board[9] = {0,0,0,0,0,0,0,0,0}; //Starts empty board.
 
 
 // SDL functions
 SDL_Window* window;
 SDL_Renderer* renderer;
-SDL_Event* click;
-
-
-
 
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
@@ -28,45 +27,59 @@ void logSDLError(std::ostream& os,
                  const std::string &msg, bool fatal = false);
 void initSDL(SDL_Window* &window, SDL_Renderer* &renderer);
 void quitSDL(SDL_Window* window, SDL_Renderer* renderer);
-void waitUntilKeyPressed();
+void waitUntilKeyPressed(); SDL_Texture* loadTexture(string path, SDL_Renderer* renderer);
+void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y);
 void loadMenu();
-void renderX(int pos);
-void renderO();
+void renderO(int pos);
+void renderX();
 int convertToNumber(int x, int y);
 void printXTurn();
 void printOTurn();
 void printXWon();
 void printOWon();
 void printTie();
-void initGrid();
-//void click_on_cell();
-char check();
+int getWinner(int board[9]);
+bool gameOver(int board[9]);
+int willWin(int board[9], int player);
 void getHumanMove();
 void getComputerMove();
 
-
-
-SDL_Texture* loadTexture(string path, SDL_Renderer* renderer);
-void renderTexture(SDL_Texture *tex, SDL_Renderer *ren, int x, int y);
 int main(int argc, char* argv[])
 {
     SDL_Window* window;
     SDL_Renderer* renderer;
-    char done;
-    done = ' ';
+    int possibleWinner;
     loadMenu();
-    initGrid();
-    do {
-    getHumanMove();
-    done = check(); /* check winner */
-    if(done!= ' ') break; /* if winner found...*/
-    getComputerMove();
-    done = check(); /* check for winner again */
-  } while(done == ' ');
-    if(done == 'X') printXWon();
-    else if(done == 'O') printOWon();
-    SDL_Delay(100000);
+    while (true) {
+		//Player X decides what move they'll do.
+		getHumanMove();
+		//Decides whether or not the game continues.
+		if (gameOver(board) > 0) {
+			break;
+		}
+		//Player O decides which move they'll do.
+		SDL_Delay(500);
+		bool good = false;
+		for (int x = 2; x > 0; x--){
+			possibleWinner = willWin(board, x);
+			if (possibleWinner != -1) {
+				board[possibleWinner] = 2;
+				renderO(possibleWinner);
+				good = true;
+				break;
+			}
+		}
+		if (good);
+		else if (board[4] == 0){
+            board[4] = 2; //Middle.
+            renderO(4);
+		}
+		else if (board[4] != 0) getComputerMove();
 
+		//Decides whether or not the game continues.
+		if(gameOver(board)) break;
+	}
+    SDL_Delay(5000);
     quitSDL(window, renderer);
     return 0;
 }
@@ -212,55 +225,55 @@ int convertToNumber(int x, int y)
         }
         return ans;
     }
-void renderX(int pos) // computer
+void renderO(int pos) // computer
 {
     if(pos == 0){
-        SDL_Texture* X = loadTexture("images/X.png", renderer);
-        renderTexture(X, renderer, 50, 75);
+        SDL_Texture* O = loadTexture("images/O.png", renderer);
+        renderTexture(O, renderer, 50, 75);
         SDL_RenderPresent(renderer);
     }
     else if(pos == 1){
-        SDL_Texture* X = loadTexture("images/X.png", renderer);
-        renderTexture(X, renderer, 160, 75);
+        SDL_Texture* O = loadTexture("images/O.png", renderer);
+        renderTexture(O, renderer, 160, 75);
         SDL_RenderPresent(renderer);
     }
     else if(pos == 2){
-        SDL_Texture* X = loadTexture("images/X.png", renderer);
-        renderTexture(X, renderer, 270, 75);
+        SDL_Texture* O = loadTexture("images/O.png", renderer);
+        renderTexture(O, renderer, 270, 75);
         SDL_RenderPresent(renderer);
     }
     else if(pos == 3){
-        SDL_Texture* X = loadTexture("images/X.png", renderer);
-        renderTexture(X, renderer, 50, 185);
+        SDL_Texture* O = loadTexture("images/O.png", renderer);
+        renderTexture(O, renderer, 50, 185);
         SDL_RenderPresent(renderer);
     }
     else if(pos == 4){
-        SDL_Texture* X = loadTexture("images/X.png", renderer);
+        SDL_Texture* X = loadTexture("images/O.png", renderer);
         renderTexture(X, renderer, 160, 185);
         SDL_RenderPresent(renderer);
     }
     else if(pos == 5){
-        SDL_Texture* X = loadTexture("images/X.png", renderer);
-        renderTexture(X, renderer, 270, 185);
+        SDL_Texture* O = loadTexture("images/O.png", renderer);
+        renderTexture(O, renderer, 270, 185);
         SDL_RenderPresent(renderer);
     }
     else if(pos == 6){
-        SDL_Texture* X = loadTexture("images/X.png", renderer);
-        renderTexture(X, renderer, 50, 295);
+        SDL_Texture* O = loadTexture("images/O.png", renderer);
+        renderTexture(O, renderer, 50, 295);
         SDL_RenderPresent(renderer);
     }
     else if(pos == 7){
-        SDL_Texture* X = loadTexture("images/X.png", renderer);
-        renderTexture(X, renderer, 160, 295);
+        SDL_Texture* O = loadTexture("images/O.png", renderer);
+        renderTexture(O, renderer, 160, 295);
         SDL_RenderPresent(renderer);
     }
     else if(pos == 8){
-        SDL_Texture* X = loadTexture("images/X.png", renderer);
-        renderTexture(X, renderer, 270, 295);
+        SDL_Texture* O = loadTexture("images/O.png", renderer);
+        renderTexture(O, renderer, 270, 295);
         SDL_RenderPresent(renderer);
     }
 }
-void renderO() //human
+void renderX() //human
 {
     SDL_Event ev;
     while(true){
@@ -268,63 +281,63 @@ void renderO() //human
         else if (ev.type == SDL_QUIT) break;
         else if (ev.type == SDL_MOUSEBUTTONDOWN){
             if(ev.button.x < 143 && ev.button.y < 166){
-                    SDL_Texture* X = loadTexture("images/O.png", renderer);
+                    SDL_Texture* X = loadTexture("images/X.png", renderer);
                     renderTexture(X, renderer, 50, 75);
                     SDL_RenderPresent(renderer);
                     break;
             }
 
             else if(ev.button.x < 252 && ev.button.x > 143 && ev.button.y < 166){
-                    SDL_Texture* X = loadTexture("images/O.png", renderer);
+                    SDL_Texture* X = loadTexture("images/X.png", renderer);
                     renderTexture(X, renderer, 160, 75);
                     SDL_RenderPresent(renderer);
                     break;
                 }
 
             else if(ev.button.x < 363 && ev.button.x > 252 && ev.button.y < 166){
-                    SDL_Texture* X = loadTexture("images/O.png", renderer);
+                    SDL_Texture* X = loadTexture("images/X.png", renderer);
                     renderTexture(X, renderer, 270, 75);
                     SDL_RenderPresent(renderer);
                     break;
                 }
 
             else if( ev.button.x < 143 && ev.button.y < 276 && ev.button.y >166){
-                    SDL_Texture* X = loadTexture("images/O.png", renderer);
+                    SDL_Texture* X = loadTexture("images/X.png", renderer);
                     renderTexture(X, renderer, 50, 185);
                     SDL_RenderPresent(renderer);
                     break;
                 }
 
             else if(ev.button.x < 252 && ev.button.x > 143 && ev.button.y < 276 && ev.button.y >166){
-                    SDL_Texture* X = loadTexture("images/O.png", renderer);
+                    SDL_Texture* X = loadTexture("images/X.png", renderer);
                     renderTexture(X, renderer, 160, 185);
                     SDL_RenderPresent(renderer);
                     break;
                 }
 
             else if(ev.button.x < 363 && ev.button.x > 252 && ev.button.y < 276 && ev.button.y >166){
-                    SDL_Texture* X = loadTexture("images/O.png", renderer);
+                    SDL_Texture* X = loadTexture("images/X.png", renderer);
                     renderTexture(X, renderer, 270, 185);
                     SDL_RenderPresent(renderer);
                     break;
                 }
 
             else if(ev.button.x < 143  && ev.button.y < 363 && ev.button.y >276){
-                    SDL_Texture* X = loadTexture("images/O.png", renderer);
+                    SDL_Texture* X = loadTexture("images/X.png", renderer);
                     renderTexture(X, renderer, 50, 295);
                     SDL_RenderPresent(renderer);
                     break;
                 }
 
             else if(ev.button.x < 252 && ev.button.x > 143 && ev.button.y < 363 && ev.button.y > 276){
-                    SDL_Texture* X = loadTexture("images/O.png", renderer);
+                    SDL_Texture* X = loadTexture("images/X.png", renderer);
                     renderTexture(X, renderer, 160, 295);
                     SDL_RenderPresent(renderer);
                     break;
                 }
 
             else if(ev.button.x < 363 && ev.button.x > 252 && ev.button.y < 363 && ev.button.y > 276){
-                    SDL_Texture* X = loadTexture("images/O.png", renderer);
+                    SDL_Texture* X = loadTexture("images/X.png", renderer);
                     renderTexture(X, renderer, 270, 295);
                     SDL_RenderPresent(renderer);
                     break;
@@ -384,69 +397,55 @@ void printChange()
 }
 
 
-char check()
-{
+int getWinner(int board[9]) {
+	//Finds winner of game, if there is no winner, returns 0.
+	int winner = 0;
+	for (int x = 0; x < 3; x++) {
+		if (compareBoxes(3*x, 3*x+1, 3*x+2)) { //Chekcs rows.
+			winner = board[3*x];
+			break;
+		} else if (compareBoxes(x, x+3, x+6)) { //Checks columns.
+			winner = board[x];
+			break;
 
-    if((grid[0]=='X' && grid[1]=='X' && grid[2]=='X') || (grid[3]=='X' && grid[4]== 'X' && grid[5]=='X') || (grid[6]=='X' && grid[7]=='X' && grid[8]=='X')
-       || (grid[0]=='X' && grid[3]=='X' && grid[6]=='X') || (grid[1]=='X' && grid[4]=='X' && grid[7]=='X') || (grid[2]=='X' && grid[5]=='X' && grid[6]=='X')
-       || (grid[0]=='X' && grid[4]=='X' && grid[8]=='X') || (grid[2]=='X' && grid[4]=='X' && grid[6]=='X'))
-        {
-           return 'X';
+		} else if (compareBoxes(2*x, 4, 8-2*x) && (x < 2)) { //Checks diagonals. Doesn't check if x == 2.
+			winner = board[4];
+			break;
+		}
+	}
+	return winner;
+}
+bool gameOver(int board[9]){
+	//Checks if game is over, and announces who won, or if it was a tie.
+	int winner = getWinner(board);
+	if (winner > 0) {
+        if(numberToLetter(winner) == 'X'){
+            printXWon();
         }
-    else if((grid[0]=='O' && grid[1]=='O' && grid[2]=='O') || (grid[3]=='O'&& grid[4]== 'O' && grid[5]=='O') || (grid[6]=='O' && grid[7]=='O' && grid[8]=='O')
-       || (grid[0]=='O' && grid[3]=='O' && grid[6]=='O') || (grid[1]=='O' && grid[4]=='O' && grid[7]=='O') || (grid[2]=='O' && grid[5]=='O' && grid[8]=='O')
-       || (grid[0]=='O' && grid[4]=='O' && grid[8]=='O') || (grid[2]=='O' && grid[4]=='O' && grid[6]=='O'))
-        {
-           return 'O';
+        else if(numberToLetter(winner) == 'O'){
+            printOWon();
         }
-    return ' ';
+		return true;
+	}
+	for (int x = 0; x < 9; x++) {
+		if (board[x] == 0) return false;
+	}
+	printTie();
+	return true;
 }
 
-//void click_on_cell()
-//{
-//    int running = 1, turn = 0, finish = 0;
-//    bool check = false;
-//    for(int i=0; i<9; i++){
-//        grid[i] = EMPTY;
-//    }
-//    SDL_Event event;
-//    while(running)
-//    {
-//        SDL_WaitEvent(&event);
-//        switch(event.type)
-//        {
-//            case SDL_QUIT:
-//                running=0;
-//                break;
-//            case SDL_MOUSEBUTTONDOWN:
-//                    if(turn)
-//                    {
-//                        int pos1 = convertToNumber(event.button.x, event.button.y);
-//                        cout << event.button.x << " " << event.button.y;
-//                        if(grid[pos1] == EMPTY ) renderO(event.button.x, event.button.y);
-//                        grid[pos1] = CIRCLE;
-//                        turn=0;
-//                    }
-//                    else if(!turn)
-//                    {
-//                        srand(time(NULL));
-//                        int pos2 = rand() % (8 - 0 + 1) + 0;
-//                        if(grid[pos2] == EMPTY){
-//                            renderX(pos2);
-//                            grid[pos2] = CROSS;
-//                            turn = 1;
-//
-//                }
-//            }
-//        }
-//    }
-//}
-void initGrid()
-{
-    for(int i=0; i<9; i++){
-        grid[i] == ' ';
-    }
+int willWin(int board[9], int player) {
+	//Checks if a given player could win in the next plank.
+	for (int x = 0; x < 9; x++) {
+		int tempBoard[9];
+		memcpy(tempBoard, board, 36);
+		if (board[x] > 0) continue;
+		tempBoard[x] = player;
+		if(getWinner(tempBoard) == player) return x;
+	}
+	return -1;
 }
+
 void getHumanMove()
 {
     SDL_Event ev;
@@ -455,12 +454,12 @@ void getHumanMove()
         else if (ev.type == SDL_QUIT) break;
         else if (ev.type == SDL_MOUSEBUTTONDOWN){
             int pos1 = convertToNumber(ev.button.x, ev.button.y);
-            if(grid[pos1] == 'X' || grid[pos1] == 'O'){
+            if(board[pos1] == 1 || board[pos1] == 2){
                 getHumanMove();
             }
             else{
-                renderO();
-                grid[pos1] = 'O';
+                renderX();
+                board[pos1] = 1;
                 break;
             }
         }
@@ -473,12 +472,12 @@ void getComputerMove()
     SDL_Delay(2000);
     srand(time(NULL));
 	int pos2 = rand() % (8 - 0 + 1) + 0;
-	if(grid[pos2] == 'X' || grid[pos2] == 'O'){
+	if(board[pos2] == 1 || board[pos2] == 2){
         getComputerMove();
 	}
     else{
-        renderX(pos2);
-        grid[pos2] = 'X';
+        renderO(pos2);
+        board[pos2] = 2;
 
     }
 
