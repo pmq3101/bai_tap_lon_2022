@@ -4,18 +4,22 @@
 #include <ctime>
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_mixer.h>
 
 #define compareBoxes(box1, box2, box3) ((board[box1] == board[box2]) && (board[box2] == board[box3]) && (board[box1] != 0)) //Checkes if three items are the same, and makes sure they're not 0's.
 #define numberToLetter(x) ((x > 0) ? (x == 1) ? 'X' : 'O' : ' ') //Takes the number and turns it into the letter or space.
 
 using namespace std;
 
-// game funtions
-
 int board[9] = {0,0,0,0,0,0,0,0,0}; //Starts empty board.
+Mix_Chunk* welcome = NULL;
+Mix_Chunk *Oturn = NULL;
+Mix_Chunk *Xturn = NULL;
+Mix_Chunk *getStart = NULL;
+Mix_Chunk *Owin = NULL;
+Mix_Chunk *Xwin = NULL;
+Mix_Chunk *draw = NULL;
 
-
-// SDL functions
 SDL_Window* window;
 SDL_Renderer* renderer;
 
@@ -46,6 +50,9 @@ void getComputerMove();
 
 int main(int argc, char* argv[])
 {
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) == -1){
+        printf("%s", Mix_GetError());
+    }
     SDL_Window* window;
     SDL_Renderer* renderer;
     int possibleWinner;
@@ -349,51 +356,60 @@ void renderX() //human
 
 void loadMenu(){
     initSDL(window, renderer);
-
     SDL_Texture* menu = loadTexture("images/title screen.png", renderer);
     SDL_RenderCopy(renderer, menu, NULL, NULL);
     SDL_RenderPresent(renderer);
+    welcome = Mix_LoadWAV("audio/welcome.wav");
+    Mix_PlayChannel(-1, welcome, 0);
     loadGrid();
+    getStart = Mix_LoadWAV("audio/get start.wav");
+    Mix_PlayChannel(-1, getStart, 0);
+    SDL_Delay(1000);
 }
 
 void printXTurn()
 {
-    SDL_Texture* Xturn = loadTexture("images/Player X_s Turn.png", renderer);
-                    renderTexture(Xturn, renderer, 400, 15);
-                    SDL_RenderPresent(renderer);
+    Xturn = Mix_LoadWAV("audio/X-turn.wav");
+    Mix_PlayChannel(-1, Xturn, 0);
+//    SDL_Texture* Xturn = loadTexture("images/Player X_s Turn.png", renderer);
+//    renderTexture(Xturn, renderer, 400, 15);
+//    SDL_RenderPresent(renderer);
+
 }
 
 void printOTurn()
 {
-    SDL_Texture* OTurn = loadTexture("images/Player O_s Turn.png", renderer);
-                    renderTexture(OTurn, renderer, 400, 15);
-                    SDL_RenderPresent(renderer);
+    Oturn = Mix_LoadWAV("audio/O-turn .wav");
+    Mix_PlayChannel(-1, Oturn, 0);
+//    SDL_Texture* OTurn = loadTexture("images/Player O_s Turn.png", renderer);
+//    renderTexture(OTurn, renderer, 400, 15);
+//    SDL_RenderPresent(renderer);
 }
 
 void printXWon()
 {
    SDL_Texture* XWon = loadTexture("images/Player X Wins.png", renderer);
-                    renderTexture(XWon, renderer, 420, 10);
-                    SDL_RenderPresent(renderer);
+    renderTexture(XWon, renderer, 420, 10);
+    SDL_RenderPresent(renderer);
 }
 
 void printOWon()
 {
     SDL_Texture* OWon = loadTexture("images/Player O Wins.png", renderer);
-                    renderTexture(OWon, renderer, 420, 10);
-                    SDL_RenderPresent(renderer);
+    renderTexture(OWon, renderer, 420, 10);
+    SDL_RenderPresent(renderer);
 }
 void printTie()
 {
     SDL_Texture* Tie = loadTexture("images/tie.png", renderer);
-                    renderTexture(Tie, renderer, 420, 10);
-                    SDL_RenderPresent(renderer);
+    renderTexture(Tie, renderer, 420, 10);
+    SDL_RenderPresent(renderer);
 }
 void printChange()
 {
     SDL_Texture* Change = loadTexture("images/change.png", renderer);
-                    renderTexture(Change, renderer, 420, 10);
-                    SDL_RenderPresent(renderer);
+    renderTexture(Change, renderer, 420, 10);
+    SDL_RenderPresent(renderer);
 }
 
 
@@ -421,9 +437,14 @@ bool gameOver(int board[9]){
 	if (winner > 0) {
         if(numberToLetter(winner) == 'X'){
             printXWon();
+            Xwin = Mix_LoadWAV("audio/X-win.wav");
+            Mix_PlayChannel(-1, Xwin, 0);
+
         }
         else if(numberToLetter(winner) == 'O'){
             printOWon();
+            Owin = Mix_LoadWAV("audio/O-win.wav");
+            Mix_PlayChannel(-1, Owin, 0);
         }
 		return true;
 	}
@@ -431,6 +452,8 @@ bool gameOver(int board[9]){
 		if (board[x] == 0) return false;
 	}
 	printTie();
+	draw = Mix_LoadWAV("audio/draw.wav");
+    Mix_PlayChannel(-1, draw, 0);
 	return true;
 }
 
@@ -448,6 +471,7 @@ int willWin(int board[9], int player) {
 
 void getHumanMove()
 {
+    printXTurn();
     SDL_Event ev;
     while(true){
         if(SDL_WaitEvent(&ev)==0) SDL_Delay(100);
@@ -464,12 +488,15 @@ void getHumanMove()
             }
         }
     }
+    SDL_Delay(1000);
+    printOTurn();
+    SDL_Delay(1000);
 }
 
 
 void getComputerMove()
 {
-    SDL_Delay(2000);
+
     srand(time(NULL));
 	int pos2 = rand() % (8 - 0 + 1) + 0;
 	if(board[pos2] == 1 || board[pos2] == 2){
@@ -478,10 +505,9 @@ void getComputerMove()
     else{
         renderO(pos2);
         board[pos2] = 2;
-
     }
-
 }
+
 
 
 
