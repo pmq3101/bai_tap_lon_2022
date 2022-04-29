@@ -19,6 +19,7 @@ Mix_Chunk *getStart = NULL;
 Mix_Chunk *Owin = NULL;
 Mix_Chunk *Xwin = NULL;
 Mix_Chunk *draw = NULL;
+Mix_Chunk *intro = NULL;
 
 SDL_Window* window;
 SDL_Renderer* renderer;
@@ -42,21 +43,25 @@ void printOTurn();
 void printXWon();
 void printOWon();
 void printTie();
+void printGameOver();
 int getWinner(int board[9]);
 bool gameOver(int board[9]);
 int willWin(int board[9], int player);
 void getHumanMove();
 void getComputerMove();
 
+
 int main(int argc, char* argv[])
 {
+    //loadMenu();
+    gameLoop:
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) == -1){
         printf("%s", Mix_GetError());
     }
+    loadMenu();
     SDL_Window* window;
     SDL_Renderer* renderer;
     int possibleWinner;
-    loadMenu();
     while (true) {
 		//Player X decides what move they'll do.
 		getHumanMove();
@@ -65,7 +70,7 @@ int main(int argc, char* argv[])
 			break;
 		}
 		//Player O decides which move they'll do.
-		SDL_Delay(500);
+		//SDL_Delay(500);
 		bool good = false;
 		for (int x = 2; x > 0; x--){
 			possibleWinner = willWin(board, x);
@@ -86,8 +91,25 @@ int main(int argc, char* argv[])
 		//Decides whether or not the game continues.
 		if(gameOver(board)) break;
 	}
+	for(int i = 0; i<9; i++){
+        board[i] = 0;
+    }
+    printGameOver();
+    SDL_Delay(1000);
+    SDL_Event e;
+    while(true){
+        if(SDL_WaitEvent(&e)==0) SDL_Delay(100);
+        else if (e.type == SDL_QUIT) break;
+        else if (e.type == SDL_KEYDOWN){
+            if(e.key.keysym.sym == SDLK_RETURN){
+                    goto gameLoop;
+            }
+            else if(e.key.keysym.sym == SDLK_BACKSPACE){
+                quitSDL(window, renderer);
+            }
+        }
+    }
     SDL_Delay(5000);
-    quitSDL(window, renderer);
     return 0;
 }
 
@@ -361,6 +383,8 @@ void loadMenu(){
     SDL_RenderPresent(renderer);
     welcome = Mix_LoadWAV("audio/welcome.wav");
     Mix_PlayChannel(-1, welcome, 0);
+    intro = Mix_LoadWAV("audio/intro.wav");
+    Mix_PlayChannel(-1, intro, 0);
     loadGrid();
     getStart = Mix_LoadWAV("audio/get start.wav");
     Mix_PlayChannel(-1, getStart, 0);
@@ -409,6 +433,14 @@ void printChange()
 {
     SDL_Texture* Change = loadTexture("images/change.png", renderer);
     renderTexture(Change, renderer, 420, 10);
+    SDL_RenderPresent(renderer);
+}
+
+void printGameOver()
+{
+    SDL_RenderClear(renderer);
+    SDL_Texture* over = loadTexture("images/Game Over.png", renderer);
+    SDL_RenderCopy(renderer, over, NULL, NULL);
     SDL_RenderPresent(renderer);
 }
 
@@ -507,6 +539,7 @@ void getComputerMove()
         board[pos2] = 2;
     }
 }
+
 
 
 
